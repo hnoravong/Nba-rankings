@@ -16,6 +16,7 @@ weights = {
 # Stats where LOWER is better
 negative_stats = {"turnovers_per_game"}
 
+
 def normalize_column(series, reverse=False):
     min_val = series.min()
     max_val = series.max()
@@ -31,13 +32,14 @@ def normalize_column(series, reverse=False):
 
     return normalized
 
+
 def generate_rankings(dataframe, weights_dict):
     df = dataframe.copy()
 
     # Start everyone at 0
     df["ranking_score"] = 0.0
 
-    # Keep track of contribution from each stat if you want to explain rankings later
+    # Add weighted contribution from each selected stat
     for stat, weight in weights_dict.items():
         if stat not in df.columns:
             raise ValueError(f"Column '{stat}' not found in dataset.")
@@ -58,26 +60,44 @@ def generate_rankings(dataframe, weights_dict):
 
     return df
 
+
 ranked_df = generate_rankings(df, weights)
 
-# Show top 20
+# Round the ranking score to 2 decimal places
+ranked_df["ranking_score"] = ranked_df["ranking_score"].round(2)
+
+# Rename columns for cleaner display
+display_df = ranked_df.rename(columns={
+    "rank": "Rank",
+    "player_name": "Player",
+    "team": "Team",
+    "ranking_score": "Score",
+    "points_per_game": "PPG",
+    "assists_per_game": "APG",
+    "rebounds_per_game": "RPG",
+    "games_played": "Games Played",
+    "fg_pct": "FG%",
+    "turnovers_per_game": "TOV"
+})
+
+# Show top 50
 print(
-    ranked_df[
+    display_df[
         [
-            "rank",
-            "player_name",
-            "team",
-            "ranking_score",
-            "points_per_game",
-            "assists_per_game",
-            "rebounds_per_game",
-            "games_played",
-            "fg_pct",
-            "turnovers_per_game"
+            "Rank",
+            "Player",
+            "Team",
+            "Score",
+            "PPG",
+            "APG",
+            "RPG",
+            "Games Played",
+            "FG%",
+            "TOV"
         ]
-    ].head(20)
+    ].head(50).to_string(index=False)
 )
 
-# Optional: save rankings
+# Save rankings
 ranked_df.to_csv("rankings_output.csv", index=False)
 ranked_df.to_json("rankings_output.json", orient="records", indent=2)
